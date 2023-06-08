@@ -35,6 +35,7 @@ async function run() {
 
     const usersCollection = client.db('summerCampDb').collection('users');
     const classCollection = client.db('summerCampDb').collection('classes');
+    const cartsCollection = client.db('summerCampDb').collection('carts');
 
 
     // route for add users in database
@@ -48,6 +49,21 @@ async function run() {
         return res.send({ message: 'user already exists' })
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+//api for add items in cart
+    app.post('/carts', async (req, res) => {
+      const cart = req.body;
+      console.log(cart)
+      const query = { studentEmail: cart.studentEmail, courseId:cart.courseId }
+      const existCourse = await cartsCollection.findOne(query);
+
+      if (existCourse) {
+        return res.send({ message: 'already added' })
+      }
+
+      const result = await cartsCollection.insertOne(cart);
       res.send(result);
     });
 
