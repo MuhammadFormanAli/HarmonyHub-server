@@ -52,6 +52,16 @@ async function run() {
       res.send(result);
     });
 
+//api for get cart data
+    app.get('/carts', async (req, res) => {
+      const email = req.query.email
+      console.log( 'email', email)
+
+      const query = { studentEmail:email}
+      const result = await cartsCollection.find(query).toArray()
+      res.send(result);
+    });
+
 //api for add items in cart
     app.post('/carts', async (req, res) => {
       const cart = req.body;
