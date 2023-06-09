@@ -38,6 +38,15 @@ async function run() {
     const cartsCollection = client.db('summerCampDb').collection('carts');
 
 
+
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      res.send({ token })
+    })
+
+
+
     // route for add users in database
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -78,18 +87,18 @@ async function run() {
     });
 
 
+
     app.get('/classes', async( req, res) => {
         const result = await classCollection.find().toArray()
         res.send(result);
     })
 
+
+
     //api for update class status
     app.put('/classes/:id',async(req,res)=>{
       const id = req.params.id 
       const newStatus = req.body.updatedStatus
-      // console.log(req.body)
-      // console.log(id)
-
       const filter = {_id: new ObjectId(id)}
       const options = { upsert: true }
       const updateStatus = {
@@ -100,7 +109,6 @@ async function run() {
 
       const result = await classCollection.updateOne(filter,updateStatus,options)
       res.send(result)
-
     })
 
 
