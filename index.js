@@ -161,6 +161,17 @@ async function run() {
       res.send(result);
     })
 
+
+
+//route for get instructors classes by their email
+    app.get('/classes/:email', verifyJWT, async(req,res)=>{
+      const email =req.params.email
+      const query = {instructorEmail:email}
+      const result = await classCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
     //api for update class status
     app.put('/classes/:id', async (req, res) => {
       const id = req.params.id
