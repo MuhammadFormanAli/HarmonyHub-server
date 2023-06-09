@@ -88,22 +88,17 @@ async function run() {
 
 
     //route for get user role
-    app.get('/user/:email',verifyJWT, async(req,res)=>{
-      const userEmail = req.params.email 
+    app.get('/user/:email', verifyJWT, async (req, res) => {
+      const userEmail = req.params.email
       console.log(userEmail)
       const query = { email: userEmail };
       const options = {
-        projection: { _id: 0 , role: 1 },
+        projection: { _id: 0, role: 1 },
       };
       const result = await usersCollection.findOne(query, options)
       res.send(result)
 
     })
-
-    // app.get('/life',(req,res)=>{
-    //   console.log('life is beautiful')
-    //   res.send("life")
-    // })
 
 
     //api for update user role
@@ -123,6 +118,9 @@ async function run() {
       res.send(result)
     })
 
+
+
+    //card related api
 
     //api for get cart data
     app.get('/carts', verifyJWT, async (req, res) => {
@@ -156,13 +154,12 @@ async function run() {
     });
 
 
-
+    //class related routes
+    //route for get classes data
     app.get('/classes', async (req, res) => {
       const result = await classCollection.find().toArray()
       res.send(result);
     })
-
-
 
     //api for update class status
     app.put('/classes/:id', async (req, res) => {
@@ -180,9 +177,6 @@ async function run() {
       res.send(result)
     })
 
-
-
-
     // route for get top classes
     app.get('/topclasses', async (req, res) => {
       const sort = { enrolledStudents: -1 }
@@ -190,6 +184,32 @@ async function run() {
       res.send(result);
 
     })
+
+
+    //route for add classes
+    app.post('/classes',verifyJWT, async (req, res) => {
+      const course = req.body.course;
+      console.log(course)
+      const query = { instructorEmail: course.instructorEmail, 
+        className: course.className,img:course.img,
+        status:course.status,price:course.price,availableSeats:course.availableSeats }
+      const existCourse = await classCollection.findOne(query);
+
+      if (existCourse) {
+        return res.send({ message: 'already added' })
+      }
+      const result = await classCollection.insertOne(course);
+      res.send(result);
+    });
+
+
+
+
+
+
+
+
+
 
 
     // Send a ping to confirm a successful connection
