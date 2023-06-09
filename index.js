@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const cors =require('cors')
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
 
 //middleware
@@ -82,6 +82,29 @@ async function run() {
         const result = await classCollection.find().toArray()
         res.send(result);
     })
+
+    //api for update class status
+    app.put('/classes/:id',async(req,res)=>{
+      const id = req.params.id 
+      const newStatus = req.body.updatedStatus
+      // console.log(req.body)
+      // console.log(id)
+
+      const filter = {_id: new ObjectId(id)}
+      const options = { upsert: true }
+      const updateStatus = {
+        $set: {
+          status:newStatus
+        }
+      }
+
+      const result = await classCollection.updateOne(filter,updateStatus,options)
+      res.send(result)
+
+    })
+
+
+
 
     // route for get top classes
     app.get('/topclasses', async( req, res) => {
