@@ -67,7 +67,7 @@ async function run() {
 
     // route for add users in database
     app.post('/users', async (req, res) => {
-      const user = req.body;
+      const user = req.body.saveUser;
       console.log(user)
       const query = { email: user.email }
       const existingUser = await usersCollection.findOne(query);
@@ -140,7 +140,7 @@ async function run() {
     });
 
     //api for add items in cart
-    app.post('/carts', async (req, res) => {
+    app.post('/carts', verifyJWT, async (req, res) => {
       const cart = req.body;
       console.log(cart)
       const query = { studentEmail: cart.studentEmail, courseId: cart.courseId }
@@ -163,10 +163,10 @@ async function run() {
 
 
 
-//route for get instructors classes by their email
-    app.get('/classes/:email', verifyJWT, async(req,res)=>{
-      const email =req.params.email
-      const query = {instructorEmail:email}
+    //route for get instructors classes by their email
+    app.get('/classes/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email
+      const query = { instructorEmail: email }
       const result = await classCollection.find(query).toArray()
       res.send(result)
     })
@@ -178,6 +178,7 @@ async function run() {
       const newStatus = req.body.updatedStatus
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true }
+
       const updateStatus = {
         $set: {
           status: newStatus
@@ -187,6 +188,27 @@ async function run() {
       const result = await classCollection.updateOne(filter, updateStatus, options)
       res.send(result)
     })
+
+
+    
+    //route for send feedback
+    app.put('/classes/feedback/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id
+      const feedback = req.body.feedback
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+
+      const updateStatus = {
+        $set: {
+          feedback: feedback
+        }
+      }
+
+      const result = await classCollection.updateOne(filter, updateStatus, options)
+      res.send(result)
+    })
+
+
 
     // route for get top classes
     app.get('/topclasses', async (req, res) => {
@@ -198,12 +220,14 @@ async function run() {
 
 
     //route for add classes
-    app.post('/classes',verifyJWT, async (req, res) => {
+    app.post('/classes', verifyJWT, async (req, res) => {
       const course = req.body.course;
       console.log(course)
-      const query = { instructorEmail: course.instructorEmail, 
-        className: course.className,img:course.img,
-        status:course.status,price:course.price,availableSeats:course.availableSeats }
+      const query = {
+        instructorEmail: course.instructorEmail,
+        className: course.className, img: course.img,
+        status: course.status, price: course.price, availableSeats: course.availableSeats
+      }
       const existCourse = await classCollection.findOne(query);
 
       if (existCourse) {
