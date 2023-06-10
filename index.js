@@ -56,6 +56,7 @@ async function run() {
     const usersCollection = client.db('summerCampDb').collection('users');
     const classCollection = client.db('summerCampDb').collection('classes');
     const cartsCollection = client.db('summerCampDb').collection('carts');
+    const testCollection = client.db('summerCampDb').collection('test');
 
 
     app.post('/jwt', (req, res) => {
@@ -102,7 +103,7 @@ async function run() {
 
 
     //api for update user role
-    app.put('/users/:id', async (req, res) => {
+    app.put('/users/:id',verifyJWT, async (req, res) => {
       const id = req.params.id
       const newRole = req.body.updatedRole
       console.log(id, newRole)
@@ -123,7 +124,7 @@ async function run() {
     //card related api
 
     //api for get cart data
-    app.get('/carts', verifyJWT, async (req, res) => {
+    app.get('/carts',verifyJWT, async (req, res) => {
       const email = req.query.email
       if (!email) {
         res.send([])
@@ -138,6 +139,8 @@ async function run() {
       const result = await cartsCollection.find(query).toArray()
       res.send(result);
     });
+
+
 
     //api for add items in cart
     app.post('/carts', verifyJWT, async (req, res) => {
@@ -154,6 +157,44 @@ async function run() {
     });
 
 
+
+        //api for update cartItem pay status
+        app.put('/cartItem/:id', async (req, res) => {
+          const id = req.params.id
+          const newStatus = req.body.updatedStatus
+          const filter = { _id: new ObjectId(id) }
+          const options = { upsert: true }
+    
+          const updateStatus = {
+            $set: {
+              payStatus: newStatus
+            }
+          }
+          const result = await cartsCollection.updateOne(filter, updateStatus, options)
+          res.send(result)
+        })
+
+
+        //delete from cart
+        app.delete('/cart/delete/:id', async(req, res)=>{
+          const id = req.params.id 
+          const query = {_id: new ObjectId(id)}
+          const result = await cartsCollection.deleteOne(query)
+          res.send(result)
+
+        })
+
+
+
+
+
+
+
+
+
+
+
+
     //class related routes
     //route for get classes data
     app.get('/classes', async (req, res) => {
@@ -161,6 +202,14 @@ async function run() {
       res.send(result);
     })
 
+    // get one class
+    app.get('/classes/:id',  async (req, res) => {
+      const id = req.params.id
+      console.log(id)
+      const query = { _id: new ObjectId(id) }
+      const result = await classCollection.findOne(query)
+      res.send(result)
+    })
 
 
     //route for get instructors classes by their email
@@ -184,13 +233,12 @@ async function run() {
           status: newStatus
         }
       }
-
       const result = await classCollection.updateOne(filter, updateStatus, options)
       res.send(result)
     })
 
 
-    
+
     //route for send feedback
     app.put('/classes/feedback/:id', verifyJWT, async (req, res) => {
       const id = req.params.id
@@ -201,6 +249,7 @@ async function run() {
       const updateStatus = {
         $set: {
           feedback: feedback
+          // feedback: feedback
         }
       }
 
@@ -238,6 +287,32 @@ async function run() {
     });
 
 
+    //test apis id:6484449938a3ac3414539216
+
+    app.post('/test/:id', async (req, res) => {
+      const id = req.params.id
+      let newName 
+      let newEmail 
+
+      if (req.query.email) {
+       newEmail = parseFloat(req.query.email)
+      }
+      if (req.query.name) {
+       newName = req.query.name
+      }
+      console.log(newEmail,newName)
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updateField = {
+        $set: {
+          name: newName,
+          email: newEmail
+        }
+      }
+
+      const result = await testCollection.updateOne(filter, updateField, options)
+      res.send(result)
+    })
 
 
 
