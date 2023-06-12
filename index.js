@@ -69,7 +69,7 @@ async function run() {
     // route for add users in database
     app.post('/users', async (req, res) => {
       const user = req.body.saveUser;
-      console.log(user)
+      // console.log(user)
       const query = { email: user.email }
       const existingUser = await usersCollection.findOne(query);
 
@@ -82,16 +82,16 @@ async function run() {
 
 
     // route for get all users 
-    app.get('/users', verifyJWT, async (req, res) => {
+    app.get('/users', async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result);
     })
 
 
     //route for get user role
-    app.get('/user/:email', verifyJWT, async (req, res) => {
+    app.get('/user/:email',async (req, res) => {
       const userEmail = req.params.email
-      console.log(userEmail)
+      // console.log(userEmail)
       const query = { email: userEmail };
       const options = {
         projection: { _id: 0, role: 1 },
@@ -106,7 +106,7 @@ async function run() {
     app.put('/users/:id',verifyJWT, async (req, res) => {
       const id = req.params.id
       const newRole = req.body.updatedRole
-      console.log(id, newRole)
+      // console.log(id, newRole)
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true }
       const updateRole = {
@@ -145,7 +145,7 @@ async function run() {
     //api for add items in cart
     app.post('/carts', verifyJWT, async (req, res) => {
       const cart = req.body;
-      console.log(cart)
+      // console.log(cart)
       const query = { studentEmail: cart.studentEmail, courseId: cart.courseId }
       const existCourse = await cartsCollection.findOne(query);
 
@@ -176,7 +176,7 @@ async function run() {
 
 
         //delete from cart
-        app.delete('/cart/delete/:id', async(req, res)=>{
+        app.delete('/cart/delete/:id',verifyJWT, async(req, res)=>{
           const id = req.params.id 
           const query = {_id: new ObjectId(id)}
           const result = await cartsCollection.deleteOne(query)
@@ -196,25 +196,41 @@ async function run() {
 
 
     //class related routes
-    //route for get classes data
+    //route for get classes data only approved classes
     app.get('/classes', async (req, res) => {
-      const result = await classCollection.find().toArray()
+      const query = {status : 'approved'}
+      const result = await classCollection.find(query).toArray()
       res.send(result);
     })
 
     // get one class
     app.get('/classes/:id',  async (req, res) => {
       const id = req.params.id
-      console.log(id)
+      // console.log(id)
       const query = { _id: new ObjectId(id) }
       const result = await classCollection.findOne(query)
       res.send(result)
     })
 
 
+
+    app.get('/all-classes',verifyJWT, async (req, res) => {            //admin only access
+      const adminEmail = req.query.email
+      const query = { email: adminEmail, role:'admin' }
+      const isAdmin =await usersCollection.findOne(query)
+      if(!isAdmin){
+        return res.status(401).send({ error: true, message: 'unauthorized access' })
+      }
+      
+      const result = await classCollection.find().toArray()
+      res.send(result)
+    })
+
+
+
     //route for get instructors classes by their email
-    app.get('/classes/:email', verifyJWT, async (req, res) => {
-      const email = req.params.email
+    app.get('/instructor-classes', verifyJWT, async (req, res) => {
+      const email = req.query.email
       const query = { instructorEmail: email }
       const result = await classCollection.find(query).toArray()
       res.send(result)
@@ -260,7 +276,7 @@ async function run() {
 
 
     // route for get top classes
-    app.get('/topclasses', async (req, res) => {
+    app.get('/top-classes', async (req, res) => {
       const sort = { enrolledStudents: -1 }
       const result = await classCollection.find().sort(sort).limit(6).toArray()
       res.send(result);
@@ -271,7 +287,7 @@ async function run() {
     //route for add classes
     app.post('/classes', verifyJWT, async (req, res) => {
       const course = req.body.course;
-      console.log(course)
+      // console.log(course)
       const query = {
         instructorEmail: course.instructorEmail,
         className: course.className, img: course.img,
@@ -289,30 +305,30 @@ async function run() {
 
     //test apis id:6484449938a3ac3414539216
 
-    app.post('/test/:id', async (req, res) => {
-      const id = req.params.id
-      let newName 
-      let newEmail 
+    // app.post('/test/:id', async (req, res) => {
+    //   const id = req.params.id
+    //   let newName 
+    //   let newEmail 
 
-      if (req.query.email) {
-       newEmail = parseFloat(req.query.email)
-      }
-      if (req.query.name) {
-       newName = req.query.name
-      }
-      console.log(newEmail,newName)
-      const filter = { _id: new ObjectId(id) }
-      const options = { upsert: true }
-      const updateField = {
-        $set: {
-          name: newName,
-          email: newEmail
-        }
-      }
+    //   if (req.query.email) {
+    //    newEmail = parseFloat(req.query.email)
+    //   }
+    //   if (req.query.name) {
+    //    newName = req.query.name
+    //   }
+    // console.log(newEmail,newName)
+    //   const filter = { _id: new ObjectId(id) }
+    //   const options = { upsert: true }
+    //   const updateField = {
+    //     $set: {
+    //       name: newName,
+    //       email: newEmail
+    //     }
+    //   }
 
-      const result = await testCollection.updateOne(filter, updateField, options)
-      res.send(result)
-    })
+    //   const result = await testCollection.updateOne(filter, updateField, options)
+    //   res.send(result)
+    // })
 
 
 
