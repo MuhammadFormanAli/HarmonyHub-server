@@ -274,7 +274,8 @@ async function run() {
     // route for get top classes
     app.get('/top-classes', async (req, res) => {
       const sort = { enrolledStudents: -1 }
-      const result = await classCollection.find().sort(sort).limit(6).toArray()
+      const query = { status: 'approved' }
+      const result = await classCollection.find(query).sort(sort).limit(6).toArray()
       res.send(result);
 
     })
@@ -315,6 +316,7 @@ async function run() {
     })
 
 
+
     // payment related api
     app.post('/payments', verifyJWT, async (req, res) => {
       const payment = req.body;
@@ -353,7 +355,7 @@ async function run() {
 
 
 
-    // to get payments data
+    //api for to get payments data
     app.get('/payment-details/:email', async (req, res) => {
       const email = req.params.email
       const filter = { email: email }
