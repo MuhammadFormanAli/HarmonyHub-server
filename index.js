@@ -33,6 +33,8 @@ const verifyJWT = (req, res, next) => {
 }
 
 
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.shgmdrc.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -43,8 +45,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
-
 
 
 
@@ -61,7 +61,16 @@ async function run() {
 
 
 
-    const testCollection = client.db('summerCampDb').collection('test');
+
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      if (user.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden' })
+      }
+      next()
+    }
 
 
     app.post('/jwt', (req, res) => {
@@ -104,7 +113,7 @@ async function run() {
     })
 
     //api for update user role
-    app.put('/users/:id', verifyJWT, async (req, res) => {
+    app.put('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id
       const newRole = req.body.updatedRole
       // console.log(id, newRole)
@@ -179,12 +188,6 @@ async function run() {
       res.send(result)
 
     })
-
-
-
-
-
-
 
 
 
@@ -296,43 +299,6 @@ async function run() {
     });
 
 
-    //test apis id:6484449938a3ac3414539216
-
-    // app.post('/test/:id', async (req, res) => {
-    //   const id = req.params.id
-    //   let newName 
-    //   let newEmail 
-
-    //   if (req.query.email) {
-    //    newEmail = parseFloat(req.query.email)
-    //   }
-    //   if (req.query.name) {
-    //    newName = req.query.name
-    //   }
-    // console.log(newEmail,newName)
-
-    //   const filter = { _id: new ObjectId(id) }
-    //   const options = { upsert: true }
-    //   const updateField = {
-    //     $set: {
-    //       name: newName,
-    //       email: newEmail
-    //     }
-    //   }
-
-    //   const result = await testCollection.updateOne(filter, updateField, options)
-    //   res.send(result)
-    // })
-
-
-
-
-
-
-
-
-
-
     // create payment intent
     app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const { price } = req.body;
@@ -354,37 +320,47 @@ async function run() {
       const payment = req.body;
       const insertResult = await paymentsCollection.insertOne(payment);
 
-      const id = req.body.courseDetails.classId
-      console.log(id)
+
+      //for update cart pay status
+      const cartId = req.body.courseDetails.cartId
+      const filter = { _id: new ObjectId(cartId) }
+      const options = { upsert: true }
+      const updateStatus = {
+        $set: {
+          payStatus: 'paid'
+        }
+      }
+      const payStatus = await cartsCollection.updateOne(filter, updateStatus, options)
 
 
-
-      // const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
-      // const deleteResult = await cartCollection.deleteMany(query)
-
+      // update seats number
+      const courseId = req.body.courseDetails.classId
+      const seatFilter = { _id: new ObjectId(courseId) }
+      const updatedSeats = {
+        $inc: {
+          availableSeats: -1,
+          enrolledStudents: 1
+        }
+      }
+      const seatsStatus = await classCollection.updateOne(seatFilter, updatedSeats, options)
+      // console.log(seatsStatus)
+      // { $inc: { quantity: -2, "metrics.orders": 1 } }
+      console.log(cartId)
+      // res.send([insertResult,payStatus]);
       res.send(insertResult);
+
     })
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // to get payments data
+    app.get('/payment-details/:email', async (req, res) => {
+      const email = req.params.email
+      const filter = { email: email }
+      console.log(email)
+      const payments = await paymentsCollection.find(filter).toArray()
+      res.send(payments)
+    })
 
 
 
