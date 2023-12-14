@@ -233,6 +233,35 @@ async function run() {
     })
 
 
+    //route for get instructors details with their id
+
+  app.get('/instructor-details/:id', async (req, res) => {
+      const id = req.params.id
+      // console.log(id)
+      const query = { _id: new ObjectId(id) }
+      const result = await usersCollection.findOne(query)
+      res.send(result)
+    })
+
+// route for get all instructors 
+  app.get('/instructors', async (req, res) => {
+      // console.log(id)
+      const query = { role: 'instructor' }
+      const result = await usersCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    // route for get Popular instructors
+  app.get('/popular-instructors', async (req, res) => {
+      // console.log(id)
+      const query = { role: 'instructor' }
+      const result = await usersCollection.find(query).limit(6).toArray()
+      res.send(result)
+    })
+
+
+    
+
     //api for update class status
     app.put('/classes/:id', async (req, res) => {
       const id = req.params.id
@@ -304,8 +333,9 @@ async function run() {
     app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
+      const finalAmount = parseFloat(amount.toFixed(2))
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
+        amount: finalAmount,
         currency: 'usd',
         payment_method_types: ['card']
       });
